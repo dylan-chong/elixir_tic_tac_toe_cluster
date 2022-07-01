@@ -14,11 +14,15 @@ defmodule ElixirTicTacToeCluster.ClusterAutoConnector do
 
   def connect_any(names) do
     # Stops once it has connected to one node
-    names |> Enum.find(false, &connect_to/1)
+    names
+    |> Enum.find(false, &connect_to/1)
+    |> tap(fn connected? ->
+      if !connected?, do: Logger.info("Did not connect to any nodes")
+    end)
   end
 
   def connect_to(name) do
-    node_atom = full_node_atom(name)
+    node_atom = name_plus_host(name)
 
     if node_atom == node() do
       false
@@ -31,7 +35,7 @@ defmodule ElixirTicTacToeCluster.ClusterAutoConnector do
     end
   end
 
-  def full_node_atom(name) do
+  def name_plus_host(name) do
     node()
     |> Atom.to_string()
     |> String.replace(~r/^[^@]+/, Atom.to_string(name))
