@@ -37,4 +37,8 @@ defmodule ElixirTicTacToeCluster.Messages do
   def non_empty_square_played(player_token, x, y) do
     "Cannot place token #{player_token} at given position (x: #{x}, y: #{y}) is not empty"
   end
+
+  def game_already_finished do
+    "The game has already finished!"
+  end
 end

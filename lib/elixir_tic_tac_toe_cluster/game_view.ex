@@ -12,6 +12,7 @@ defmodule ElixirTicTacToeCluster.GameView do
 
   use GenServer
   alias ElixirTicTacToeCluster.Game.Player
+  alias ElixirTicTacToeCluster.Game.GameState
   alias ElixirTicTacToeCluster.Messages
 
   @name __MODULE__
@@ -53,25 +54,33 @@ defmodule ElixirTicTacToeCluster.GameView do
     |> display(:awaiting_turn)
   end
 
-  def display_user_error(game_state, user_error, options \\ []) do
-    options
-    |> Keyword.validate!(users_turn?: false)
-    |> Keyword.fetch!(:users_turn?)
-    |> if do
-      Messages.display("Error: " <> user_error)
-      display_its_your_turn(game_state)
-    else
-      Messages.display("Error: " <> user_error)
-    end
+  def display_user_error(user_error) do
+    Messages.display("Error: " <> user_error)
   end
 
-  def display_turn_applied(game_state, board) do
+  def display_turn_applied(game_state) do
     game_state
     # Want to alert the player that just played
     |> Map.fetch!(game_state.turn |> Player.opponent())
     |> Map.fetch!(:node)
     |> name_for_node()
-    |> display(:turn_applied, board: board)
+    |> display(:turn_applied, board: game_state.board)
+  end
+
+  def display_winner_loser(game_state) do
+    game_state
+    |> GameState.winner()
+    |> elem(0)
+    |> Map.fetch!(:node)
+    |> name_for_node()
+    |> display(:you_won, board: game_state.board)
+
+    game_state
+    |> GameState.loser()
+    |> elem(0)
+    |> Map.fetch!(:node)
+    |> name_for_node()
+    |> display(:you_lost, board: game_state.board)
   end
 
   defp display(game_view, type, args \\ []) do
@@ -122,6 +131,26 @@ defmodule ElixirTicTacToeCluster.GameView do
     Your turn has been applied
 
     #{render_board(board)}
+    """
+  end
+
+  defp message_string(:you_won, %{board: board}) do
+    """
+    Your turn has been applied
+
+    #{render_board(board)}
+
+    You won! Congratulations!
+    """
+  end
+
+  defp message_string(:you_lost, %{board: board}) do
+    """
+    Your opponent has done their move
+
+    #{render_board(board)}
+
+    You lost! Sorry!
     """
   end
 

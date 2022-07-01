@@ -32,4 +32,27 @@ defmodule ElixirTicTacToeCluster.Game.GameState do
       game_state.turn
     )
   end
+
+  def finished?(game_state), do: winner(game_state) != nil
+
+  def winner(game_state) do
+    # game_state.board
+    # TODO
+    if Enum.random(1..5) > 3 do
+      {game_state.o, :o}
+    else
+      {game_state.o, :o}
+    end
+  end
+
+  def loser(game_state) do
+    case winner(game_state) do
+      nil ->
+        nil
+
+      {_winner, winner_token} ->
+        loser_token = Player.opponent(winner_token)
+        {game_state |> Map.fetch!(loser_token), loser_token}
+    end
+  end
 end

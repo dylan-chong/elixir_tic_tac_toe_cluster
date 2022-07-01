@@ -64,34 +64,58 @@ defmodule ElixirTicTacToeCluster.Game do
   def handle_call({:play_turn, %{player_node: player_node, x: x, y: y}}, _from, game_state) do
     {_player, token} = GameState.player_for_node(game_state, player_node)
 
-    cond do
-      token != game_state.turn ->
-        display_user_error = fn ->
-          GameView.display_user_error(game_state, Messages.not_your_turn(), users_turn?: false)
-        end
-
+    game_state
+    |> validate_turn(player_node, token, x, y)
+    |> case do
+      {:user_error, display_user_error, game_state} ->
         {:reply, {:user_error, display_user_error}, game_state}
 
-      game_state.board |> Enum.at(y) |> Enum.at(x) != :_ ->
-        display_user_error = fn ->
-          GameView.display_user_error(game_state, Messages.non_empty_square_played(token, x, y),
-            users_turn?: true
-          )
-        end
-
-        {:reply, {:user_error, display_user_error}, game_state}
-
-      true ->
+      :ok ->
         new_state =
           game_state
           |> GameState.next_turn()
           |> GameState.place_token(x, y)
 
-        GameView.display_turn_applied(new_state, new_state.board)
-        GameView.display_turn_messages(new_state)
+        if GameState.finished?(new_state) do
+          GameView.display_winner_loser(new_state)
+        else
+          GameView.display_turn_applied(new_state)
+          GameView.display_turn_messages(new_state)
+        end
+
         {:reply, :ok, new_state}
     end
   end
 
   # Internal helper functions
+
+  defp validate_turn(game_state, _player_node, player_token, x, y) do
+    cond do
+      # GameState.finished?(game_state) ->
+        # display_user_error = fn ->
+          # GameView.display_user_error(Messages.game_already_finished())
+        # end
+
+        # {:user_error, display_user_error, game_state}
+
+      player_token != game_state.turn ->
+        display_user_error = fn ->
+          GameView.display_user_error(Messages.not_your_turn())
+        end
+
+        {:user_error, display_user_error, game_state}
+
+      game_state.board |> Enum.at(y) |> Enum.at(x) != :_ ->
+        display_user_error = fn ->
+          player_token
+          |> Messages.non_empty_square_played(x, y)
+          |> GameView.display_user_error()
+        end
+
+        {:user_error, display_user_error, game_state}
+
+      true ->
+        :ok
+    end
+  end
 end
