@@ -4,12 +4,16 @@ defmodule ElixirTicTacToeCluster.Application do
   @moduledoc false
 
   use Application
+  alias ElixirTicTacToeCluster.ClusterAutoConnector
 
   @impl true
   def start(_type, _args) do
+
+
     children = [
       # Starts a worker by calling: ElixirTicTacToeCluster.Worker.start_link(arg)
       # {ElixirTicTacToeCluster.Worker, arg}
+      {Task, &ClusterAutoConnector.auto_connect/0}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -19,3 +19,13 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
 be found at <https://hexdocs.pm/elixir_tic_tac_toe_cluster>.
 
+## Running
+
+Start one or mode nodes, passing a name that is a single lowercase letter. This
+will allow automagic connection to the cluster
+
+```
+shell_a> iex --cookie cookie --name a -S mix run
+
+shell_b> iex --cookie cookie --name b -S mix run
+```
