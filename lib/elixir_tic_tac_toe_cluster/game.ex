@@ -4,6 +4,7 @@ defmodule ElixirTicTacToeCluster.Game do
   """
   use GenServer
   alias ElixirTicTacToeCluster.GameView
+  alias ElixirTicTacToeCluster.Game.{GameState, Player}
 
   def start_link(args) do
     GenServer.start_link(__MODULE__, args)
@@ -13,33 +14,32 @@ defmodule ElixirTicTacToeCluster.Game do
     game |> GenServer.call(:begin)
   end
 
+  def play_turn(game, player_node, x, y) do
+    game |> GenServer.call({:play_turn, %{player_node: player_node, x: x, y: y}})
+  end
+
   # Internal GenServer functions
-
-  defmodule Player do
-    @enforce_keys ~w[game_view]a
-    defstruct @enforce_keys
-  end
-
-  defmodule GameState do
-    @enforce_keys ~w[o x turn]a
-    defstruct @enforce_keys
-  end
 
   @impl true
   def init(args) do
-    args = Keyword.validate!(args, [:player_views])
+    args = Keyword.validate!(args, [:player_nodes])
 
     [player_x_view, player_o_view] =
       args
-      |> Keyword.fetch!(:player_views)
+      |> Keyword.fetch!(:player_nodes)
       |> Enum.shuffle()
 
     {
       :ok,
       %GameState{
-        o: %Player{game_view: player_o_view},
-        x: %Player{game_view: player_x_view},
-        turn: :o
+        o: %Player{node: player_o_view},
+        x: %Player{node: player_x_view},
+        turn: :o,
+        board: [
+          [:_, :_, :_],
+          [:_, :_, :_],
+          [:_, :_, :_]
+        ]
       }
     }
   end
@@ -48,6 +48,11 @@ defmodule ElixirTicTacToeCluster.Game do
   def handle_call(:begin, _from, state) do
     GameView.display_starting_messages(state)
     GameView.display_turn_message(state)
+    {:reply, :ok, state}
+  end
+
+  def handle_call({:play_turn, %{player_node: player_node, x: x, y: y}}, _from, state) do
+    # player_node
     {:reply, :ok, state}
   end
 

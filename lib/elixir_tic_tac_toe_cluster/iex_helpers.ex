@@ -3,6 +3,19 @@ defmodule ElixirTicTacToeCluster.IExHelpers do
   Functions are imported into iex shell for convenience
   """
 
+  alias ElixirTicTacToeCluster.Application
+  alias ElixirTicTacToeCluster.MessageDisplayer
+
+  @doc """
+  """
+  def play(x, y) when x in 0..2 and y in 0..2 do
+    Application.play_turn_from_current_node(x, y)
+  end
+
+  def play(x, y) do
+    MessageDisplayer.display_invalid_turn(x, y)
+  end
+
   @doc """
   Debugging function that gives the state of all the important process on this node
   """
@@ -15,8 +28,7 @@ defmodule ElixirTicTacToeCluster.IExHelpers do
     game_pids
     |> Map.new(&{"Game #{inspect(&1)}", state(&1)})
     |> Map.merge(%{
-      ElixirTicTacToeCluster.GameAssignmentState =>
-        state(ElixirTicTacToeCluster.GameAssignmentState),
+      ElixirTicTacToeCluster.GameAssignment => state(ElixirTicTacToeCluster.GameAssignment),
       ElixirTicTacToeCluster.GameView => state(ElixirTicTacToeCluster.GameView)
     })
   end

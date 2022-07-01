@@ -11,28 +11,39 @@ defmodule ElixirTicTacToeCluster.GameView do
   """
 
   use GenServer
+  alias ElixirTicTacToeCluster.Game.Player
+  alias ElixirTicTacToeCluster.MessageDisplayer
 
   @name __MODULE__
 
-  def name, do: @name
+  def name_for_node(node), do: {@name, node}
 
   def start_link([]) do
     GenServer.start_link(__MODULE__, :unused_value, name: @name)
   end
 
   def display_starting_messages(game_state) do
-    game_state.o.game_view
-    |> display(:started_game, you: :o, opponent_node: game_state.x.game_view |> elem(1))
+    game_state.o.node
+    |> name_for_node()
+    |> display(:started_game, you: :o, opponent_node: game_state.x.node)
 
-    game_state.x.game_view
-    |> display(:started_game, you: :x, opponent_node: game_state.o.game_view |> elem(1))
+    game_state.x.node
+    |> name_for_node()
+    |> display(:started_game, you: :x, opponent_node: game_state.o.node)
   end
 
   def display_turn_message(game_state) do
     game_state
     |> Map.fetch!(game_state.turn)
-    |> Map.fetch!(:game_view)
-    |> display(:its_your_turn)
+    |> Map.fetch!(:node)
+    |> name_for_node()
+    |> display(:its_your_turn, board: game_state.board)
+
+    game_state
+    |> Map.fetch!(game_state.turn |> Player.opponent())
+    |> Map.fetch!(:node)
+    |> name_for_node()
+    |> display(:awaiting_turn)
   end
 
   defp display(game_view, type, args \\ []) do
@@ -51,21 +62,57 @@ defmodule ElixirTicTacToeCluster.GameView do
   @impl true
   def handle_call({:display, type, args}, _from, :unused_state) do
     type
-    |> message_to_display(args |> Map.new())
-    # Prints message to local node's console
-    |> IO.puts()
+    |> message_string(args |> Map.new())
+    |> MessageDisplayer.display()
 
     {:reply, :ok, :unused_state}
   end
 
-  defp message_to_display(:started_game, %{you: you, opponent_node: opponent_node}) do
+  defp message_string(:started_game, %{you: you, opponent_node: opponent_node}) do
     """
     \nStarted game with #{opponent_node}
-    You are #{you}
+    Your token is `#{you}`
     """
   end
 
-  defp message_to_display(:its_your_turn, %{}) do
-    "It's your turn!"
+  defp message_string(:its_your_turn, %{board: board}) do
+    """
+    It's your turn!
+
+    #{render_board(board)}
+
+    #{MessageDisplayer.play_turn_instructions()}
+    """
+  end
+
+  defp message_string(:awaiting_turn, %{}) do
+    "Waiting for your turn"
+  end
+
+  defp render_board(board) do
+    rows_strings =
+      board
+      |> Enum.map(fn row ->
+        row_string =
+          row
+          |> Enum.map(fn cell -> Atom.to_string(cell) end)
+          |> Enum.join(" ")
+
+        "| #{row_string} |"
+      end)
+
+    horizontal_line =
+      rows_strings
+      |> List.first()
+      |> String.replace(~r/./, "-")
+
+    [
+      [horizontal_line],
+      rows_strings,
+      [horizontal_line]
+    ]
+    |> Enum.concat()
+    |> Enum.join("\n")
+    |> String.pad_leading(4)
   end
 end

@@ -2,7 +2,7 @@ defmodule ElixirTicTacToeCluster.ClusterAutoConnector do
   require Logger
 
   def auto_connect() do
-    connect_any(possible_names())
+    connect_all(possible_names())
     {:connected_nodes, Node.list()}
   end
 
@@ -12,12 +12,16 @@ defmodule ElixirTicTacToeCluster.ClusterAutoConnector do
     |> Enum.map(&String.to_atom/1)
   end
 
-  def connect_any(names) do
-    # Stops once it has connected to one node
+  def connect_all(_names = []) do
+    Logger.debug("Did not connect to any nodes")
+  end
+
+  def connect_all(names) do
     names
-    |> Enum.find(false, &connect_to/1)
+    |> Enum.map(&connect_to/1)
+    |> Enum.all?()
     |> tap(fn connected? ->
-      if !connected?, do: Logger.info("Did not connect to any nodes")
+      if !connected?, do: Logger.debug("Did not connect to any nodes")
     end)
   end
 
