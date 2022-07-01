@@ -1,25 +1,27 @@
 defmodule ElixirTicTacToeCluster.GameAssignmentState do
   use GenServer
 
-  @global_name __MODULE__
+  @name __MODULE__
 
   def start_link([]) do
-    GenServer.start_link(@global_name, :unused_value, name: @global_name)
+    GenServer.start_link(__MODULE__, :unused_value, name: @name)
   end
 
-  def assign_new_opponent(opponent_node) do
+  def assign_new_opponent_to_self(opponent_node) do
     me = Node.self()
 
-    {@global_name, opponent_node}
+    {@name, opponent_node}
     |> GenServer.call({:assign_new_opponent, %{with_node: me}})
     |> case do
-      :already_assigned ->
-        false
-
-      :ok_assigned ->
-        # TODO start new game genserver,
-        true
+      :already_assigned -> false
+      :ok_assigned -> true
     end
+  end
+
+  def assign_own_opponent(opponent_node) do
+    :ok_assigned = @name |> GenServer.call({:assign_new_opponent, %{with_node: opponent_node}})
+
+    true
   end
 
   # Internal functions
