@@ -4,16 +4,17 @@ defmodule ElixirTicTacToeCluster.IExHelpers do
   """
 
   alias ElixirTicTacToeCluster.Application
-  alias ElixirTicTacToeCluster.MessageDisplayer
+  alias ElixirTicTacToeCluster.Messages
 
   @doc """
   """
   def play(x, y) when x in 0..2 and y in 0..2 do
     Application.play_turn_from_current_node(x, y)
+    :ok
   end
 
   def play(x, y) do
-    MessageDisplayer.display_invalid_turn(x, y)
+    Messages.display_invalid_turn(x, y)
   end
 
   @doc """

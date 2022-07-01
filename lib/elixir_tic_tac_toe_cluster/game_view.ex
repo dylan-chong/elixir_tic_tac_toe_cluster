@@ -12,7 +12,7 @@ defmodule ElixirTicTacToeCluster.GameView do
 
   use GenServer
   alias ElixirTicTacToeCluster.Game.Player
-  alias ElixirTicTacToeCluster.MessageDisplayer
+  alias ElixirTicTacToeCluster.Messages
 
   @name __MODULE__
 
@@ -32,18 +32,46 @@ defmodule ElixirTicTacToeCluster.GameView do
     |> display(:started_game, you: :x, opponent_node: game_state.o.node)
   end
 
-  def display_turn_message(game_state) do
+  def display_turn_messages(game_state) do
+    display_its_your_turn(game_state)
+    display_waiting_for_turn(game_state)
+  end
+
+  def display_its_your_turn(game_state) do
     game_state
     |> Map.fetch!(game_state.turn)
     |> Map.fetch!(:node)
     |> name_for_node()
     |> display(:its_your_turn, board: game_state.board)
+  end
 
+  def display_waiting_for_turn(game_state) do
     game_state
     |> Map.fetch!(game_state.turn |> Player.opponent())
     |> Map.fetch!(:node)
     |> name_for_node()
     |> display(:awaiting_turn)
+  end
+
+  def display_user_error(game_state, user_error, options \\ []) do
+    options
+    |> Keyword.validate!(users_turn?: false)
+    |> Keyword.fetch!(:users_turn?)
+    |> if do
+      Messages.display("Error: " <> user_error)
+      display_its_your_turn(game_state)
+    else
+      Messages.display("Error: " <> user_error)
+    end
+  end
+
+  def display_turn_applied(game_state, board) do
+    game_state
+    # Want to alert the player that just played
+    |> Map.fetch!(game_state.turn |> Player.opponent())
+    |> Map.fetch!(:node)
+    |> name_for_node()
+    |> display(:turn_applied, board: board)
   end
 
   defp display(game_view, type, args \\ []) do
@@ -63,7 +91,7 @@ defmodule ElixirTicTacToeCluster.GameView do
   def handle_call({:display, type, args}, _from, :unused_state) do
     type
     |> message_string(args |> Map.new())
-    |> MessageDisplayer.display()
+    |> Messages.display()
 
     {:reply, :ok, :unused_state}
   end
@@ -81,12 +109,20 @@ defmodule ElixirTicTacToeCluster.GameView do
 
     #{render_board(board)}
 
-    #{MessageDisplayer.play_turn_instructions()}
+    #{Messages.play_turn_instructions()}
     """
   end
 
   defp message_string(:awaiting_turn, %{}) do
     "Waiting for your turn"
+  end
+
+  defp message_string(:turn_applied, %{board: board}) do
+    """
+    Your turn has been applied
+
+    #{render_board(board)}
+    """
   end
 
   defp render_board(board) do

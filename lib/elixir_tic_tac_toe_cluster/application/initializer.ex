@@ -4,7 +4,7 @@ defmodule ElixirTicTacToeCluster.Application.Initializer do
   alias ElixirTicTacToeCluster.{
     ClusterAutoConnector,
     GameAssignment,
-    MessageDisplayer,
+    Messages,
     Game
   }
 
@@ -20,7 +20,7 @@ defmodule ElixirTicTacToeCluster.Application.Initializer do
     |> Stream.map(&try_start_game_with/1)
     |> Enum.find(false, & &1)
     |> unless do
-      MessageDisplayer.display_waiting_for_players()
+      Messages.display_waiting_for_players()
     end
   end
 
