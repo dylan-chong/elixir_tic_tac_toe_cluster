@@ -34,7 +34,7 @@ defmodule ElixirTicTacToeCluster.Game do
   def init(args) do
     args = Keyword.validate!(args, [:player_nodes])
 
-    [player_x_view, player_o_view] =
+    [player_x_node, player_o_node] =
       args
       |> Keyword.fetch!(:player_nodes)
       |> Enum.shuffle()
@@ -42,8 +42,8 @@ defmodule ElixirTicTacToeCluster.Game do
     {
       :ok,
       %GameState{
-        o: %Player{node: player_o_view},
-        x: %Player{node: player_x_view},
+        o: %Player{node: player_o_node},
+        x: %Player{node: player_x_node},
         turn: :o,
         board: [
           [:_, :_, :_],
@@ -73,8 +73,8 @@ defmodule ElixirTicTacToeCluster.Game do
       :ok ->
         new_state =
           game_state
+          |> GameState.place_token(x, y, token)
           |> GameState.next_turn()
-          |> GameState.place_token(x, y)
 
         if GameState.finished?(new_state) do
           GameView.display_winner_loser(new_state)
@@ -91,12 +91,12 @@ defmodule ElixirTicTacToeCluster.Game do
 
   defp validate_turn(game_state, _player_node, player_token, x, y) do
     cond do
-      # GameState.finished?(game_state) ->
-        # display_user_error = fn ->
-          # GameView.display_user_error(Messages.game_already_finished())
-        # end
+      GameState.finished?(game_state) ->
+        display_user_error = fn ->
+          GameView.display_user_error(Messages.game_already_finished())
+        end
 
-        # {:user_error, display_user_error, game_state}
+        {:user_error, display_user_error, game_state}
 
       player_token != game_state.turn ->
         display_user_error = fn ->

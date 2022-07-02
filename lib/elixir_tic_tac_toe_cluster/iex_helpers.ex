@@ -7,6 +7,7 @@ defmodule ElixirTicTacToeCluster.IExHelpers do
   alias ElixirTicTacToeCluster.Messages
 
   @doc """
+  Used by the player. `GameView` prints help messages on this
   """
   def play(x, y) when x in 0..2 and y in 0..2 do
     Application.play_turn_from_current_node(x, y)
